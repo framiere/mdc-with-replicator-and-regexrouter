@@ -87,6 +87,7 @@ docker-compose exec connect-us \
           "src.kafka.bootstrap.servers": "broker-europe:9091",
           "dest.kafka.bootstrap.servers": "broker-us:9092",
           "confluent.topic.replication.factor": 1,
+          "topic.config.sync": false,
           "provenance.header.enable": true,
           "topic.whitelist": "EUROPE_sales",
           "transforms": "dropPrefix",
@@ -110,6 +111,7 @@ docker-compose exec connect-us \
           "src.kafka.bootstrap.servers": "broker-us:9092",
           "dest.kafka.bootstrap.servers": "broker-us:9092",
           "confluent.topic.replication.factor": 1,
+          "topic.config.sync": false,
           "provenance.header.enable": true,
           "topic.whitelist": "US_sales",
           "transforms": "dropPrefix",
@@ -135,6 +137,7 @@ docker-compose exec connect-europe \
           "src.kafka.bootstrap.servers": "broker-us:9092",
           "dest.kafka.bootstrap.servers": "broker-europe:9091",
           "confluent.topic.replication.factor": 1,
+          "topic.config.sync": false,
           "provenance.header.enable": true,
           "topic.whitelist": "US_sales",
           "transforms": "dropPrefix",
@@ -158,6 +161,7 @@ docker-compose exec connect-europe \
           "src.kafka.bootstrap.servers": "broker-europe:9091",
           "dest.kafka.bootstrap.servers": "broker-europe:9091",
           "confluent.topic.replication.factor": 1,
+          "topic.config.sync": false,
           "provenance.header.enable": true,
           "topic.whitelist": "EUROPE_sales",
           "transforms": "dropPrefix", 
@@ -166,24 +170,4 @@ docker-compose exec connect-europe \
           "transforms.dropPrefix.replacement": "$1",
           }}' \
      http://localhost:8383/connectors | jq .
-
-
-
-echo "Replicator has created EUROPE_sales even though regexrouter is defined, as topic creation is not part of the poll"
-docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales --describe
-
-echo "change EUROPE_sales partitions in europe to see the change happen also in US"
-docker-compose exec connect-europe kafka-topics --bootstrap-server broker-europe:9093 --topic EUROPE_sales --alter --partitions 2
-
-echo "wait for topic.poll.interval.ms to elapse"
-sleep 120
-
-echo "EUROPE_sales_with_rename_format is updated in US thanks to replicator regular behavior"
-docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales_with_rename_format --describe
-
-echo "EUROPE_sales is updated in US thanks to replicator non poll based topic sync"
-docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales --describe
-
-echo "but sales is NOT updated"
-docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic sales --describe
 
