@@ -45,8 +45,8 @@ done
 echo "Control Center has started!"
 
 
-seq -f "sale_%g" 100 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 seq -f "sale_%g" 100 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
+seq -f "sale_%g" 100 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 
 
 docker container exec connect-us \

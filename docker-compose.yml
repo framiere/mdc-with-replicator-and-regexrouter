@@ -174,7 +174,7 @@ services:
     environment:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker-metrics:9093'
       CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper-metrics:2183'
-      CONTROL_CENTER_CONNECT_EUROPE_CLUSTER: http://connect-europe:8381
+      CONTROL_CENTER_CONNECT_EUROPE_CLUSTER: http://connect-europe:8383
       CONTROL_CENTER_CONNECT_US_CLUSTER: http://connect-us:8382
       CONTROL_CENTER_KAFKA_EUROPE_BOOTSTRAP_SERVERS: 'broker-europe:9091'
       CONTROL_CENTER_KAFKA_US_BOOTSTRAP_SERVERS: 'broker-us:9092'
