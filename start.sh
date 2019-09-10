@@ -66,6 +66,31 @@ docker-compose exec connect-us \
           "topic.whitelist": "EUROPE_sales",
           "topic.poll.interval.ms": 10000,
           "tasks.max": 5}}' \
-     http://localhost:8382/connectors
+     http://localhost:8382/connectors | jq .
 
 docker-compose exec connect-us curl http://localhost:8382/connectors/replicate-europe-to-us/status | jq .
+
+docker-compose exec connect-us \
+     curl -X POST \
+     -H "Content-Type: application/json" \
+     --data '{
+        "name": "replicate-europe-to-us-with-regex-router",
+        "config": {
+          "connector.class":"io.confluent.connect.replicator.ReplicatorSourceConnector",
+          "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "src.consumer.group.id": "replicate-europe-to-us",
+          "src.kafka.bootstrap.servers": "broker-europe:9091",
+          "dest.kafka.bootstrap.servers": "broker-us:9092",
+          "confluent.topic.replication.factor": 1,
+          "topic.whitelist": "sales",
+          "topic.poll.interval.ms": 10000,
+          "transforms": "dropPrefix", 
+          "transforms.dropPrefix.type": "org.apache.kafka.connect.transforms.RegexRouter", 
+          "transforms.dropPrefix.regex": "EUROPE_(.*)", 
+          "transforms.dropPrefix.replacement": "$1",        
+          "tasks.max": 5}}' \
+     http://localhost:8382/connectors | jq .
+
+docker-compose exec connect-us curl http://localhost:8382/connectors/replicate-europe-to-us-with-regex-router/status | jq .
