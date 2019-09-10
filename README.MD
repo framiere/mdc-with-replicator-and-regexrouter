@@ -8,3 +8,5 @@ Both Europe and US have sales topics, here are how they are defined:
 We want on both continents to have ALL sales in the `sales` topic
 
 If you are using `regexrouter` you will need to specify `topic.config.sync=false`.
+
+Please be aware that you will not support dynamic partitions addition.
