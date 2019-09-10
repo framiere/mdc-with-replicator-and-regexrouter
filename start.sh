@@ -45,30 +45,29 @@ done
 echo "Control Center has started!"
 
 
-seq -f "sale_%g" 100 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
-seq -f "sale_%g" 100 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
+seq -f "european_sale_%g" 100 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
 
+seq -f "us_sale_%g" 100 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 
 docker-compose exec connect-us \
      curl -X POST \
      -H "Content-Type: application/json" \
      --data '{
-        "name": "replicate-europe-to-us",
+        "name": "replicate-europe-to-us-with-rename-format",
         "config": {
           "connector.class":"io.confluent.connect.replicator.ReplicatorSourceConnector",
           "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
-          "src.consumer.group.id": "replicate-europe-to-us",
+          "src.consumer.group.id": "replicate-europe-to-us-with-rename-format",
           "src.kafka.bootstrap.servers": "broker-europe:9091",
           "dest.kafka.bootstrap.servers": "broker-us:9092",
           "confluent.topic.replication.factor": 1,
           "topic.whitelist": "EUROPE_sales",
           "topic.poll.interval.ms": 10000,
+          "topic.rename.format": "${topic}_with_rename_format"
           "tasks.max": 5}}' \
      http://localhost:8382/connectors | jq .
-
-docker-compose exec connect-us curl http://localhost:8382/connectors/replicate-europe-to-us/status | jq .
 
 docker-compose exec connect-us \
      curl -X POST \
@@ -80,11 +79,11 @@ docker-compose exec connect-us \
           "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
-          "src.consumer.group.id": "replicate-europe-to-us",
+          "src.consumer.group.id": "replicate-europe-to-us-with-regex-router",
           "src.kafka.bootstrap.servers": "broker-europe:9091",
           "dest.kafka.bootstrap.servers": "broker-us:9092",
           "confluent.topic.replication.factor": 1,
-          "topic.whitelist": "sales",
+          "topic.whitelist": "EUROPE_sales",
           "topic.poll.interval.ms": 10000,
           "transforms": "dropPrefix", 
           "transforms.dropPrefix.type": "org.apache.kafka.connect.transforms.RegexRouter", 
@@ -93,4 +92,25 @@ docker-compose exec connect-us \
           "tasks.max": 5}}' \
      http://localhost:8382/connectors | jq .
 
-docker-compose exec connect-us curl http://localhost:8382/connectors/replicate-europe-to-us-with-regex-router/status | jq .
+docker-compose exec connect-us \
+     curl -X POST \
+     -H "Content-Type: application/json" \
+     --data '{
+        "name": "replicate-us-to-us-with-regex-router",
+        "config": {
+          "connector.class":"io.confluent.connect.replicator.ReplicatorSourceConnector",
+          "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
+          "src.consumer.group.id": "replicate-us-to-us-with-regex-router",
+          "src.kafka.bootstrap.servers": "broker-us:9092",
+          "dest.kafka.bootstrap.servers": "broker-us:9092",
+          "confluent.topic.replication.factor": 1,
+          "topic.whitelist": "US_sales",
+          "topic.poll.interval.ms": 10000,
+          "transforms": "dropPrefix", 
+          "transforms.dropPrefix.type": "org.apache.kafka.connect.transforms.RegexRouter", 
+          "transforms.dropPrefix.regex": "US_(.*)", 
+          "transforms.dropPrefix.replacement": "$1",        
+          "tasks.max": 5}}' \
+     http://localhost:8382/connectors | jq .
