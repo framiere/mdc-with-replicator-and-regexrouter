@@ -49,7 +49,7 @@ seq -f "sale_%g" 100 | docker container exec -i broker-europe kafka-console-prod
 seq -f "sale_%g" 100 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 
 
-docker container exec connect-us \
+docker-compose exec connect-us \
      curl -X POST \
      -H "Content-Type: application/json" \
      --data '{
@@ -67,3 +67,5 @@ docker container exec connect-us \
           "topic.poll.interval.ms": 10000,
           "tasks.max": 5}}' \
      http://localhost:8382/connectors
+
+docker-compose exec connect-us curl http://localhost:8382/connectors/replicate-europe-to-us/status | jq .
