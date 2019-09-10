@@ -45,9 +45,9 @@ done
 echo "Control Center has started!"
 
 
-seq -f "european_sale_%g" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
+seq -f "european_sale_%g ${RANDOM}" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
 
-seq -f "us_sale_%g" 10 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
+seq -f "us_sale_%g ${RANDOM}" 10 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 
 
 echo Consolidating all sales in the US
@@ -119,7 +119,6 @@ docker-compose exec connect-us \
           }}' \
      http://localhost:8382/connectors | jq .
 
-
 echo Consolidating all sales in Europe
 
 docker-compose exec connect-europe \
@@ -167,3 +166,24 @@ docker-compose exec connect-europe \
           "transforms.dropPrefix.replacement": "$1",
           }}' \
      http://localhost:8383/connectors | jq .
+
+
+
+
+docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales --describe
+
+echo "change EUROPE_sales partitions in europe to see its relexion in US"
+docker-compose exec connect-europe kafka-topics --bootstrap-server broker-europe:9093 --topic EUROPE_sales --alter --partitions 2
+
+echo "wait for topic.poll.interval.ms to elapse"
+sleep 120
+
+echo "EUROPE_sales is updated in US thanks to replicator regular behavior"
+docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales_with_rename_format --describe
+
+echo "EUROPE_sales is updated in US thanks to replicator"
+docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic EUROPE_sales --describe
+
+echo "but it is NOT updated because we used regex router"
+docker-compose exec connect-us kafka-topics --bootstrap-server broker-us:9092 --topic sales --describe
+
