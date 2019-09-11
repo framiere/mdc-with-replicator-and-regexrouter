@@ -7,6 +7,9 @@ Both Europe and US have sales topics, here are how they are defined:
 
 We want on both continents to have ALL sales in the `sales` topic
 
-If you are using `regexrouter` you will need to specify `topic.config.sync=false`.
+If you are using [`RegexRouter`](https://docs.confluent.io/current/connect/transforms/regexrouter.html) you will need to specify:
 
-Please be aware that you will not support dynamic partitions addition.
+* `topic.config.sync=false`
+* `topic.auto.create=false`
+* `topic.preserve.partitions=false`
+* § https://docs.confluent.io/current/connect/kafka-connect-replicator/configuration_options.html#destination-topics
