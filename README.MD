@@ -1,10 +1,14 @@
 # MDC and single views
 
-## Setup
-
-We have 2 regions: `US` and `EUROPE` each have a topic with sales that happened regionaly.
+* [Objective](#Objective)
+* [Replicator](#Replicator)
+    * [Using rename-format](#Using-rename-format)
+    * [Using RegexRouter](#Using-RegexRouter)
+    * [Using the default mode](#Using-the-default-mode)
 
 ## Objective
+
+We have 2 regions: `US` and `EUROPE` each have a topic with sales that happened regionaly.
 We want on each region to have a way to see **all** sales in **all** regions.
 
 # Replicator
@@ -35,7 +39,7 @@ you will need to specify:
 
 This setup is executable in `regexrouter.sh`
 
-## Default mode
+## Using the default mode
 
 ![Simplest replicator setup](simplest.png "Replicator")
 
