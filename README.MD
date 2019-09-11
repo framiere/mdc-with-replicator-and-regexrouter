@@ -5,6 +5,7 @@
     * [Using rename-format](#Using-rename-format)
     * [Using RegexRouter](#Using-RegexRouter)
     * [Using the default mode](#Using-the-default-mode)
+    * [Using the default mode and having a local merge](#Using-the-default-mode-and-having-a-local-merge)
 
 ## Objective
 
@@ -73,3 +74,18 @@ It does simplify everything as there is
 * less connectors
 * native
 * ...
+
+
+## Using the default mode and having a local merge
+
+Basically, same as the previous solution, plus we merge all the local `sales_` topics to a single `sales` topic.
+
+As a follow of the previous `--whitelist "sales_.*"` property, the connector will use the `topic.regex` property.
+We used `metadata.max.age.ms` for the client, we will use `topic.poll.interval.ms` to specify the discovery frequency.
+
+* https://docs.confluent.io/current/connect/kafka-connect-replicator/configuration_options.html#source-topics
+
+Beware that while it seems simples, there is indeed 
+
+* duplication
+* it kind of breaks the ACLs mindset, while it also can be useful
