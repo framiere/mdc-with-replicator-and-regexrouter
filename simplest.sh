@@ -52,9 +52,6 @@ docker-compose exec connect-europe \
           "dest.kafka.bootstrap.servers": "broker-europe:9092",
           "confluent.topic.replication.factor": 1,
           "provenance.header.enable": true,
-          "topic.config.sync": false,
-          "topic.auto.create": false,
-          "topic.preserve.partitions": false,
           "topic.whitelist": "sales_US"
           }}' \
      http://localhost:8083/connectors | jq .
