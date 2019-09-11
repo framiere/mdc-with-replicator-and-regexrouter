@@ -1,5 +1,6 @@
 #!/bin/bash
 
+docker-compose down -v 
 docker-compose up -d
 
 # Verify Kafka Connect europe has started within MAX_WAIT seconds
