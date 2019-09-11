@@ -44,7 +44,7 @@ while [[ ! $(docker-compose logs control-center) =~ "Started NetworkTrafficServe
 done
 echo "Control Center has started!"
 
-seq -f "european_sale_%g ${RANDOM}" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
+seq -f "european_sale_%g ${RANDOM}" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9092 --topic EUROPE_sales
 
 seq -f "us_sale_%g ${RANDOM}" 10 | docker container exec -i broker-us kafka-console-producer --broker-list localhost:9092 --topic US_sales
 
@@ -62,7 +62,7 @@ docker-compose exec connect-us \
           "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "src.consumer.group.id": "replicate-europe-to-us-with-regex-router",
-          "src.kafka.bootstrap.servers": "broker-europe:9091",
+          "src.kafka.bootstrap.servers": "broker-europe:9092",
           "dest.kafka.bootstrap.servers": "broker-us:9092",
           "confluent.topic.replication.factor": 1,
           "provenance.header.enable": true,
@@ -75,7 +75,7 @@ docker-compose exec connect-us \
           "transforms.dropPrefix.regex": "EUROPE_(.*)",
           "transforms.dropPrefix.replacement": "$1"
           }}' \
-     http://localhost:8382/connectors | jq .
+     http://localhost:8083/connectors | jq .
 
 docker-compose exec connect-us \
      curl -X POST \
@@ -101,7 +101,7 @@ docker-compose exec connect-us \
           "transforms.dropPrefix.regex": "US_(.*)",
           "transforms.dropPrefix.replacement": "$1"
           }}' \
-     http://localhost:8382/connectors | jq .
+     http://localhost:8083/connectors | jq .
 
 echo Consolidating all sales in Europe
 
@@ -117,7 +117,7 @@ docker-compose exec connect-europe \
           "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "src.consumer.group.id": "replicate-us-with-regex-router",
           "src.kafka.bootstrap.servers": "broker-us:9092",
-          "dest.kafka.bootstrap.servers": "broker-europe:9091",
+          "dest.kafka.bootstrap.servers": "broker-europe:9092",
           "confluent.topic.replication.factor": 1,
           "provenance.header.enable": true,
           "topic.config.sync": false,
@@ -129,7 +129,7 @@ docker-compose exec connect-europe \
           "transforms.dropPrefix.regex": "US_(.*)",
           "transforms.dropPrefix.replacement": "$1"
           }}' \
-     http://localhost:8383/connectors | jq .
+     http://localhost:8083/connectors | jq .
 
 docker-compose exec connect-europe \
      curl -X POST \
@@ -142,8 +142,8 @@ docker-compose exec connect-europe \
           "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "header.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
           "src.consumer.group.id": "replicate-europe-to-europe-with-regex-router",
-          "src.kafka.bootstrap.servers": "broker-europe:9091",
-          "dest.kafka.bootstrap.servers": "broker-europe:9091",
+          "src.kafka.bootstrap.servers": "broker-europe:9092",
+          "dest.kafka.bootstrap.servers": "broker-europe:9092",
           "confluent.topic.replication.factor": 1,
           "provenance.header.enable": true,
           "topic.config.sync": false,
@@ -154,26 +154,26 @@ docker-compose exec connect-europe \
           "transforms.dropPrefix.regex": "EUROPE_(.*)",
           "transforms.dropPrefix.replacement": "$1"
           }}' \
-     http://localhost:8383/connectors | jq .
+     http://localhost:8083/connectors | jq .
 
 
 
 echo "Verify we have received the data in the sales topic in EUROPE"
-docker-compose exec broker-europe kafka-console-consumer --bootstrap-server broker-europe:9091 --topic sales --from-beginning --max-messages 20
+docker-compose exec broker-europe kafka-console-consumer --bootstrap-server broker-europe:9092 --topic sales --from-beginning --max-messages 20
 
 echo "Verify we have received the data in the sales topic in the US"
 docker-compose exec broker-us kafka-console-consumer --bootstrap-server broker-us:9092 --topic sales --from-beginning --max-messages 20
 
 echo "That will not work, but let's verify"
 echo "Let's change EUROPE_sales partitions"
-docker-compose exec connect-europe kafka-topics --bootstrap-server broker-europe:9091 --topic EUROPE_sales --alter --partitions 2
+docker-compose exec connect-europe kafka-topics --bootstrap-server broker-europe:9092 --topic EUROPE_sales --alter --partitions 2
 
 echo "Resend data to the EUROPE_sales topic"
-seq -f "after addind partitions in european sale %g ${RANDOM}" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9091 --topic EUROPE_sales
+seq -f "after addind partitions in european sale %g ${RANDOM}" 10 | docker container exec -i broker-europe kafka-console-producer --broker-list localhost:9092 --topic EUROPE_sales
 
 echo "Verify it is now in sales topic in EUROPE"
 echo "We are waiting for 30 elements, but there's only 25"
-docker-compose exec broker-europe kafka-console-consumer --bootstrap-server broker-europe:9091 --topic sales --from-beginning --max-messages 30
+docker-compose exec broker-europe kafka-console-consumer --bootstrap-server broker-europe:9092 --topic sales --from-beginning --max-messages 30
 
 echo "Verify it is now in sales topic in the US"
 echo "We are waiting for 30 elements, but there's only 25"

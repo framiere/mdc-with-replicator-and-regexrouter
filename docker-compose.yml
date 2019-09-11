@@ -5,8 +5,6 @@ services:
     image: confluentinc/cp-zookeeper:5.3.0
     hostname: zookeeper-europe
     container_name: zookeeper-europe
-    ports:
-      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -15,20 +13,16 @@ services:
     image: confluentinc/cp-zookeeper:5.3.0
     hostname: zookeeper-us
     container_name: zookeeper-us
-    ports:
-      - "2182:2182"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   zookeeper-metrics:
     image: confluentinc/cp-zookeeper:5.3.0
     hostname: zookeeper-metrics
     container_name: zookeeper-metrics
-    ports:
-      - "2183:2183"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2183
+      ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   broker-europe:
@@ -39,18 +33,16 @@ services:
       - zookeeper-europe
       - broker-metrics
       - zookeeper-metrics
-    ports:
-      - "9091:9091"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-europe:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-europe:9091
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-europe:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       # Confluent Metrics Reporter for Control Center Cluster Monitoring
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-metrics:9093
-      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper-metrics:2183
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-metrics:9092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper-metrics:2181
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: 'true'
 
@@ -62,18 +54,16 @@ services:
       - zookeeper-us
       - broker-metrics
       - zookeeper-metrics
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-us:2182'
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-us:2181'
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-us:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       # Confluent Metrics Reporter for Control Center Cluster Monitoring
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-metrics:9093
-      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper-metrics:2183
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-metrics:9092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper-metrics:2181
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: 'true'
   
@@ -83,12 +73,10 @@ services:
     container_name: broker-metrics
     depends_on:
       - zookeeper-metrics
-    ports:
-      - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-metrics:2183'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-metrics:9093
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-metrics:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-metrics:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
 
@@ -100,12 +88,9 @@ services:
       - zookeeper-us
       - broker-us
       - broker-metrics
-    ports:
-      - "8382:8382"
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'broker-us:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect-us
-      CONNECT_REST_PORT: 8382
       CONNECT_GROUP_ID: "connect-us"
       CONNECT_PRODUCER_CLIENT_ID: "connect-worker-producer-us"
       CONNECT_CONFIG_STORAGE_TOPIC: connect-us.config
@@ -123,9 +108,9 @@ services:
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
       # Confluent Monitoring Interceptors for Control Center Streams Monitoring
       CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
-      CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9093
+      CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9092
       CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
-      CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9093
+      CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9092
 
   connect-europe:
     image: confluentinc/cp-enterprise-replicator:5.3.0
@@ -135,12 +120,9 @@ services:
       - zookeeper-europe
       - broker-europe
       - broker-metrics
-    ports:
-      - "8383:8383"
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: 'broker-europe:9091'
+      CONNECT_BOOTSTRAP_SERVERS: 'broker-europe:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect-europe
-      CONNECT_REST_PORT: 8383
       CONNECT_GROUP_ID: "connect-europe"
       CONNECT_PRODUCER_CLIENT_ID: "connect-worker-producer-europe"
       CONNECT_CONFIG_STORAGE_TOPIC: connect-europe.config
@@ -158,9 +140,9 @@ services:
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
       # Confluent Monitoring Interceptors for Control Center Streams Monitoring
       CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
-      CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9093
+      CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9092
       CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
-      CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9093
+      CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_BOOTSTRAP_SERVERS: broker-metrics:9092
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.3.0
@@ -174,14 +156,13 @@ services:
     ports:
       - "9021:9021"
     environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker-metrics:9093'
-      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper-metrics:2183'
-      CONTROL_CENTER_CONNECT_EUROPE_CLUSTER: http://connect-europe:8383
-      CONTROL_CENTER_CONNECT_US_CLUSTER: http://connect-us:8382
-      CONTROL_CENTER_KAFKA_EUROPE_BOOTSTRAP_SERVERS: 'broker-europe:9091'
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker-metrics:9092'
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper-metrics:2181'
+      CONTROL_CENTER_CONNECT_EUROPE_CLUSTER: http://connect-europe:8083
+      CONTROL_CENTER_CONNECT_US_CLUSTER: http://connect-us:8083
+      CONTROL_CENTER_KAFKA_EUROPE_BOOTSTRAP_SERVERS: 'broker-europe:9092'
       CONTROL_CENTER_KAFKA_US_BOOTSTRAP_SERVERS: 'broker-us:9092'
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-      PORT: 9021
